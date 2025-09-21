@@ -3,13 +3,19 @@
 
 #include <ncurses.h>
 #include <stdlib.h>
+#include <string.h>
 #include <stdio.h>
 #include <panel.h>
+#include <assert.h>
 
 #define MAX_PLAYERS 5
+#define NUM_DECKS 8
+#define DECK_SIZE 52
+#define MAX_CARDS 21
+#define BUY_IN 10
 
 enum card_type {
-        NONE,
+        UNKNOWN,
         SPADE,
         CLUB,
         HEART,
@@ -18,7 +24,7 @@ enum card_type {
 
 struct card {
         enum card_type type;
-        PANEL *display;
+        WINDOW *display;
         int value;
 };
 
@@ -26,7 +32,6 @@ struct deck {
         struct card *cards;
         int remaining;
 };
-
 struct player {
         int ubound;
         int lbound;
@@ -45,15 +50,27 @@ struct window {
         int height;
 };
 
-void game_setup(struct player *players, struct player *dealer);
+void game_reset(struct player *players, struct player *dealer, struct deck *deck, WINDOW **history, WINDOW **input);
 
-void print_hand(struct player *players);
+void game_cleanup(struct player *players, struct player *dealer, struct deck *deck, WINDOW **history, WINDOW **input);
 
-void print_chips(struct player *players);
+void game_setup(struct player *players, struct player *dealer, struct deck *deck, WINDOW **history, WINDOW **input);
 
-void print_dealer(struct player *players);
+void hand_print(struct player *player);
 
-void get_card(struct player *player, struct deck deck);
+void chips_print(struct player *player);
 
-void check_player(struct player *player, struct player *dealer);
+void dealer_print(struct player *player);
+
+void card_get(struct player *player, struct deck *deck);
+
+void player_check(struct player *player, struct player *dealer);
+
+void player_reset(struct player *player);
+
+void player_cleanup(struct player *player);
+
+void deck_reset(struct deck *deck);
+
+void deck_cleanup(struct deck *deck);
 #endif

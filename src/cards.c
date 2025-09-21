@@ -1,98 +1,161 @@
 #include "cards.h"
 
-void game_setup(struct player *players, struct player *dealer) {
-        int i;
-
-        int hand_width = COLS / MAX_PLAYERS;
-        int hand_height = LINES / 2;
-
-        for (i = 0; i < MAX_PLAYERS; i++) {
-                players[i].hand = newwin(hand_height, hand_width, LINES / 2, i * hand_width);
-                box(players[i].hand, 0, 0);
-                touchwin(players[i].hand);
-                wrefresh(players[i].hand);
-        }
-
-        dealer->hand = newwin(LINES / 2, COLS / 2, 0, 0);
-        dealer->status = newwin(LINES / 2, COLS / 2, 0, COLS / 2);
-
-        box(dealer->hand, 0, 0);
-        box(dealer->status, 0, 0);
-        wrefresh(dealer->hand);
-        wrefresh(dealer->status);
-}
-
-void print_hand(struct player *players) {
-        int i, j;
-        char *card;
-
-        for (i = 0; i < MAX_PLAYERS; i++) {
-                if (players[i].lost) {
-                        printf("Player %d has busted.\n", i);
-                }
-
-                printf("Player %d has ", i);
-
-                for (j = 0; j < players[i].num_cards; j++) {
-                        switch(players[i].cards[j].type) {
-                        case NONE:
-                        break;
-                        case SPADE:
-                                card = "spade";
-                                break;
-                        case CLUB:
-                                card = "club";
-                                break;
-                        case HEART:
-                                card = "heart";
-                                break;
-                        case DIAMOND:
-                                card = "diamond";
-                                break;
-                        }
-
-                        printf("%s,%d ", card, players[i].cards[j].value);
-                }
-
-                printf("\n");
-        }
-}
-
-void print_chips(struct player *players) {
+void game_reset(struct player *players, struct player *dealer, struct deck *deck, WINDOW **history, WINDOW **input) {
         int i;
 
         for (i = 0; i < MAX_PLAYERS; i++) {
-                werase(players[i].status);
-                if (players[i].lost) {
-                        wprintw(players[i].status, "%s has busted.\n", players[i].name);
-                        continue;
-                }
-
-                wprintw(players[i].status, "%s: %d chips\n", players[i].name, players[i].chips);
-
-                if (players[i].ubound == players[i].lbound) {
-                        wprintw(players[i].status, "%s: %d points", players[i].name, players[i].lbound);
-                } else {
-                        wprintw(players[i].status, "%s: %d-%d points", players[i].name, players[i].lbound, players[i].ubound);
-                }
+                player_reset(&players[i]);
         }
+
+        player_reset(dealer);
+
+        werase(*history);
+        box(*history, 0, 0);
+        wrefresh(*history);
+
+        werase(*input);
+        box(*input, 0, 0);
+        wrefresh(*input);
+
+        deck_reset(deck);
 }
 
-void print_dealer(struct player *dealer) {
-        printf("%p\n", (void*)dealer);
-}
+void game_cleanup(struct player *players, struct player *dealer, struct deck *deck, WINDOW **history, WINDOW **input) {
+        int i;
 
-void get_card(struct player *player, struct deck deck) {
-        int sel = rand() % deck.remaining;
-        struct card draw = deck.cards[sel];
+        for (i = 0; i < MAX_PLAYERS; i++) {
+                player_cleanup(&players[i]);
+        }
 
-        deck.cards[sel] = deck.cards[--deck.remaining];
+        player_cleanup(dealer);
 
-        player->lbound += draw.value;
+        delwin(*history);
+        delwin(*input);
+
+        deck_cleanup(deck);
 }
         
 
-void check_player(struct player *player, struct player *dealer) {
+void game_setup(struct player *players, struct player *dealer, struct deck *deck, WINDOW **history, WINDOW **input) {
+        int i;
+        int default_name_size = 16;
+
+        int hand_width = COLS / MAX_PLAYERS;
+
+        for (i = 0; i < MAX_PLAYERS; i++) {
+                players[i].status = newwin(4, hand_width, LINES - 4, i * hand_width);
+
+                players[i].hand = newwin(LINES / 2 - 4, hand_width, LINES / 2, i * hand_width);
+                players[i].cards = malloc(MAX_CARDS * sizeof(*players[i].cards));
+
+                players[i].name = malloc(default_name_size * sizeof(*players[i].name));
+
+                sprintf(players[i].name, "Player %d", i + 1);
+        }
+
+        dealer->hand = newwin(LINES / 2 - 4, COLS * 2 / 3, 0, 0);
+        dealer->status = newwin(4, COLS * 2 / 3, LINES / 2 - 4, 0);
+
+        dealer->name = malloc(default_name_size * sizeof(*dealer->name));
+        sprintf(dealer->name, "Dealer");
+
+        deck->cards = malloc(NUM_DECKS * DECK_SIZE * sizeof(*deck->cards));
+
+        *history = newwin(LINES / 2 - 4, hand_width * MAX_PLAYERS - COLS * 2 / 3, 0, COLS * 2 / 3);
+        *input = newwin(4, hand_width * MAX_PLAYERS - COLS * 2 / 3, LINES / 2 - 4, COLS * 2 / 3);
+
+        game_reset(players, dealer, deck, history, input);
+        assert(deck->remaining > 0);
+}
+
+void chips_print(struct player *players) {
+        werase(players->status);
+        box(players->status, 0, 0);
+        mvwprintw(players->status, 0, 1, " %s ", players->name);
+
+        if (players->lost) {
+                mvwprintw(players->status, 1, 1, "%s has busted.\n", players->name);
+                wrefresh(players->status);
+                return;
+        }
+
+        mvwprintw(players->status, 1, 1, "%d chips remain.\n", players->chips);
+        mvwprintw(players->status, 2, 1, "%d chips betted.\n", players->bet);
+
+        if (players->ubound == players->lbound) {
+                mvwprintw(players->status, 3, 1, "%d points.", players->lbound);
+        } else {
+                mvwprintw(players->status, 3, 1, "%d-%d points.", players->lbound, players->ubound);
+        }
+
+        wrefresh(players->status);
+}
+
+void dealer_print(struct player *dealer) {
+        printf("%p\n", (void*)dealer);
+}
+
+
+
+WINDOW *card_draw(struct player *player, struct card draw) {
+        int width, height;
+        WINDOW *card;
+        char *card_types[5] = {"Unknown Type", "Spades", "Clubs", "Hearts", "Diamonds"};
+        char *card_values[14] = {
+                "NULL", "Ace", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight",
+                "Nine", "Ten", "Jack", "Queen", "King"
+        };
+
+        getmaxyx(player->hand, height, width);
+        height -= 2;
+        width -= 2;
+
+
+        card = derwin(player->hand, height - 9, width - 1, player->num_cards, player->num_cards % 2 + 1);
+        werase(card);
+
+        assert(width - 1 > 0 && height - 10 > 0);
+
+        box(card, 0, 0);
+
+        mvwprintw(card, 0, 1, "%s of %s", card_values[draw.value], card_types[draw.type]);
+
+        return card;
+}
+
+void card_get(struct player *player, struct deck *deck) {
+        int sel;
+        struct card draw;
+        WINDOW *card;
+
+        assert(deck->remaining > 0);
+
+        sel = rand() % deck->remaining;
+        draw = deck->cards[sel];
+
+        player->num_cards++;
+
+        card = card_draw(player, draw);
+
+        wrefresh(card);
+        wrefresh(player->hand);
+
+        assert(player->num_cards < MAX_CARDS);
+        player->cards[player->num_cards] = deck->cards[sel];
+        player->cards[player->num_cards].display = card;
+        deck->cards[sel] = deck->cards[--deck->remaining];
+
+        player->lbound += (draw.value > 10) ? 10 : draw.value;
+
+        if (draw.value == 1) {
+                player->ubound += 10;
+        } else {
+                player->ubound += (draw.value > 10) ? 10 : draw.value;
+        }
+}
+        
+
+void player_check(struct player *player, struct player *dealer) {
         if (player->lbound > 21) {
                 /*adjust();*/
                 /* bust! */
@@ -106,4 +169,52 @@ void check_player(struct player *player, struct player *dealer) {
         } else {
                 /* Still low. Keep drawing! */
         }
+}
+
+void player_reset(struct player *player) {
+        player->ubound = player->lbound = 0;
+        player->bet = 0;
+        player->chips = BUY_IN;
+        player->lost = 0;
+
+        player->num_cards = 0;
+
+        werase(player->hand);
+        box(player->hand, 0, 0);
+        wrefresh(player->hand);
+
+        werase(player->status);
+        box(player->status, 0, 0);
+        mvwprintw(player->status, 0, 1, " %s ", player->name);
+        wrefresh(player->status);
+}
+
+void player_cleanup(struct player *player) {
+        delwin(player->hand);
+        delwin(player->status);
+        free(player->name);
+        free(player->cards);
+}
+
+void deck_reset(struct deck *deck) {
+        struct card new_card;
+        int i, j, k;
+
+        deck->remaining = 0;
+
+        for (i = 1; i <= 13; i++) {
+                for (j = 1; j <= 4; j++) {
+                        for (k = 0; k < NUM_DECKS; k++) {
+                                new_card.value = i;
+                                new_card.type = j;
+                                assert(deck->remaining < NUM_DECKS * DECK_SIZE);
+                                deck->cards[deck->remaining++] = new_card;
+                        }
+                }
+        }
+}
+
+void deck_cleanup(struct deck *deck) {
+        free(deck->cards);
+        deck->remaining = 0;
 }

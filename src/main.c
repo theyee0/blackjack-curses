@@ -115,6 +115,8 @@ int main(void) {
 
                 if (stands + busts == MAX_PLAYERS + 1) {
                         card_get(&dealer, &deck);
+                        chips_print(&dealer);
+                        wrefresh(dealer.status);
 
                         if (dealer.lbound > 21) {
                                 dealer.lost = 1;
@@ -122,11 +124,11 @@ int main(void) {
                                 dealer.lost = 0;
                         }
 
-                        for (; dealer.ubound > 21; dealer.ubound -= 10);
+                        for (; dealer.ubound > 21 && dealer.lbound < dealer.ubound; dealer.ubound -= 10);
 
                         for (i = 0; i < MAX_PLAYERS; i++) {
                                 if (!players[i].lost) {
-                                        for (; players[i].ubound > 21; players[i].ubound -= 10);
+                                        for (; players[i].ubound > 21 && players[i].lbound < players[i].ubound; players[i].ubound -= 10);
                                         if (dealer.lost || players[i].ubound > dealer.ubound) {
                                                 players[i].chips += players[i].bet * 2;
                                                 players[i].bet = 0;
@@ -136,6 +138,9 @@ int main(void) {
                                                 players[i].bet = 0;
                                         }
                                 }
+
+                                chips_print(&players[i]);
+                                wrefresh(players[i].status);
                         }
                         history_items++; history_clear(history, &history_items);
                         history_log(history, "Enter \"y\" for another round and anything else to quit");

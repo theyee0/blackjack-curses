@@ -78,6 +78,7 @@ void game_setup(struct player *players, struct player *dealer, struct deck *deck
         dealer->hand = newwin(LINES / 2 - 4, COLS * 2 / 3, 0, 0);
         dealer->status = newwin(4, COLS * 2 / 3, LINES / 2 - 4, 0);
         dealer->cards = malloc(MAX_CARDS * sizeof(*dealer->cards));
+        dealer->bet = 0;
 
         dealer->name = malloc(default_name_size * sizeof(*dealer->name));
         sprintf(dealer->name, " Dealer ");

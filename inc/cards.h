@@ -6,7 +6,6 @@
 #include <time.h>
 #include <string.h>
 #include <stdio.h>
-#include <panel.h>
 #include <assert.h>
 
 #define MAX_PLAYERS 5

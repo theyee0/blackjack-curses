@@ -13,7 +13,7 @@ OBJ_FILES := $(addprefix $(OBJ_DIR)/, $(addsuffix .o, $(SRC_FILES)))
 all: $(NAME)
 
 $(NAME): $(OBJ_FILES)
-	$(CC) $(CFLAGS) -I $(INC_DIR) $(OBJ_FILES) -o $(NAME) -lncurses -lpanel
+	$(CC) $(CFLAGS) -I $(INC_DIR) $(OBJ_FILES) -o $(NAME) -lncurses
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
 	$(CC) $(CFLAGS) -c -I $(INC_DIR) $< -o $@
 
@@ -29,7 +29,7 @@ clean:
 debug: CFLAGS += -g -fsanitize=address
 debug: $(NAME)
 
-release: CFLAGS += -static -O3 -flto
+release: CFLAGS += -O3 -flto
 release: $(NAME)
 
 profile: CFLAGS += -pg

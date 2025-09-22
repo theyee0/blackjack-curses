@@ -3,6 +3,7 @@
 
 #include <ncurses.h>
 #include <stdlib.h>
+#include <time.h>
 #include <string.h>
 #include <stdio.h>
 #include <panel.h>
@@ -50,6 +51,9 @@ struct window {
         int height;
 };
 
+void history_log(WINDOW *history, char *b);
+void history_clear(WINDOW *history, int *history_items);
+
 void game_reset(struct player *players, struct player *dealer, struct deck *deck, WINDOW **history, WINDOW **input);
 
 void game_cleanup(struct player *players, struct player *dealer, struct deck *deck, WINDOW **history, WINDOW **input);
@@ -60,7 +64,7 @@ void hand_print(struct player *player);
 
 void chips_print(struct player *player);
 
-void dealer_print(struct player *player);
+int dealer_ai(struct player *dealer, struct deck *deck);
 
 void card_get(struct player *player, struct deck *deck);
 

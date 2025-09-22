@@ -27,8 +27,9 @@ int main(void) {
 
         game_setup(players, &dealer, &deck, &history, &input);
 
-        history_log(history, "Game started. Type \"hit\" to hit. Anything else is a stand.\n");
         history_items++; history_clear(history, &history_items);
+        history_log(history, "Game started. Type \"hit\" to hit. Anything else is a stand.\n");
+
 
         getmaxyx(input, y, x);
         input_field = derwin(input, y - 2, x - 2, 1, 1);
@@ -47,6 +48,7 @@ int main(void) {
                 stands = 0;
 
                 stands = dealer_ai(&dealer, &deck);
+                history_items++; history_clear(history, &history_items);
 
                 if (stands) {
                         history_log(history, "The dealer has decided to stand.\n");
@@ -54,7 +56,6 @@ int main(void) {
                         history_log(history, "The dealer has hit.\n");
                 }
 
-                history_items++; history_clear(history, &history_items);
                 chips_print(&dealer);
                 wrefresh(dealer.status);
 
@@ -64,8 +65,8 @@ int main(void) {
                                         players[i].bet += BUY_IN;
                                         players[i].chips -= BUY_IN;
                                 } else {
-                                        wprintw(history, "%s does not have enough for a buy-in.\n", players[i].name);
                                         history_items++; history_clear(history, &history_items);
+                                        wprintw(history, "%s does not have enough for a buy-in.\n", players[i].name);
                                         wrefresh(history);
                                         players[i].lost = 1;
                                 }
@@ -93,12 +94,12 @@ int main(void) {
                         if (!strcmp(b, "hit")) {
                                 card_get(&players[i], &deck);
                                 player_check(&players[i], &dealer);
+                                history_items++; history_clear(history, &history_items);
                                 wprintw(history, "%s has decided to hit.\n", players[i].name);
-                                history_items++; history_clear(history, &history_items);
                                 wrefresh(history);
-                        } else { 
-                                wprintw(history, "%s has decided to stand.\n", players[i].name);
+                        } else {
                                 history_items++; history_clear(history, &history_items);
+                                wprintw(history, "%s has decided to stand.\n", players[i].name);
                                 wrefresh(history);
                                 stands++;
                         }
@@ -136,10 +137,8 @@ int main(void) {
                                         }
                                 }
                         }
-
-                        history_log(history, "Enter \"y\" for another round and anything else to quit");
                         history_items++; history_clear(history, &history_items);
-
+                        history_log(history, "Enter \"y\" for another round and anything else to quit");
                         mvwgetnstr(input_field, 0, 0, b, 1024);
                         werase(input_field);
                         wrefresh(input_field);

@@ -63,7 +63,7 @@ int main(void) {
                 wrefresh(dealer.status);
 
                 for (i = 0; i < MAX_PLAYERS; i++) {
-                        if (players[i].bet == 0) {
+                        if (players[i].bet == 0 && !players[i].lost) {
                                 if (players[i].chips >= BUY_IN) {
                                         players[i].bet += BUY_IN;
                                         players[i].chips -= BUY_IN;
@@ -154,7 +154,10 @@ int main(void) {
                         if (b[0] != 'y') {
                                 break;
                         } else {
-                                game_reset(players, &dealer, &deck, &history_field, &input);
+                                game_reset(players, &dealer, &deck, &history, &input);
+                                werase(history_field);
+                                wrefresh(history_field);
+                                history_items = 0;
                         }
                 }
         }

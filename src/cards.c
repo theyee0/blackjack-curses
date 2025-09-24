@@ -153,7 +153,6 @@ void history_clear(WINDOW *history, int *history_items) {
 
         if (*history_items >= y) {
                 werase(history);
-                box(history, 0, 0);
                 *history_items = 0*x;
         }
 

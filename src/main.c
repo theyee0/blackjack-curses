@@ -134,8 +134,8 @@ int main(void) {
                                         for (; players[i].ubound > 21 && players[i].lbound < players[i].ubound; players[i].ubound -= 10);
                                         if (dealer.lost || players[i].ubound > dealer.ubound) {
                                                 players[i].chips += players[i].bet * 2;
-                                                players[i].bet = 0;
                                                 dealer.chips -= players[i].bet;
+                                                players[i].bet = 0;
                                         } else if (players[i].ubound == dealer.ubound) {
 						players[i].chips += players[i].bet;
 						players[i].bet = 0;

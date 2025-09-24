@@ -136,7 +136,10 @@ int main(void) {
                                                 players[i].chips += players[i].bet * 2;
                                                 players[i].bet = 0;
                                                 dealer.chips -= players[i].bet;
-                                        } else {
+                                        } else if (players[i].ubound == dealer.ubound) {
+						players[i].chips += players[i].bet;
+						players[i].bet = 0;
+					} else {
                                                 dealer.chips += players[i].bet;
                                                 players[i].bet = 0;
                                         }
